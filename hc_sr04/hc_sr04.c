@@ -77,7 +77,7 @@ ISR(TIMER0_COMP_vect){	//62,5 times per second (every 16ms) ---> see Init() fucn
 		TCCR1B |= 1<<WGM12;	//CTC mode
 		TRIGGER_PIN_SET_HIGH;
 		TCNT1 = 0; //reset Timer1
-		TIFR |= OCF1A;	//clear any previous interrupt flag
+		TIFR |= 1<<OCF1A;	//clear any previous interrupt flag
 		TIMSK |= 1<<OCIE1A;	//Output Compare A Match Interrupt Enable		
 #endif
 
