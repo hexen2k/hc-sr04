@@ -100,8 +100,11 @@ ISR(TIMER1_CAPT_vect){	//interrupt frequency = 2MHZ (F_CPU=16MHZ / prescaler=8),
 		ConversionState = STATE_BUSY;
 	}else	//falling edge
 	{
-		length = ICR1/2;	//length reading	(1 tick=0,5us -> 200=100us  therefore divided by 2)		
-		FreshData = DATA_FRESH;	//set marker, reseted after sending data in main function
+		if (FreshData != DATA_BAD){	//if timeout condition has not occurred
+			length = ICR1/2;	//length reading	(1 tick=0,5us -> 200=100us  therefore divided by 2)		
+			FreshData = DATA_FRESH;	//set marker, reseted after sending data in main function
+		} else FreshData = DATA_OLD;	//next cycle will be handled correctly
+		
 		TCCR1B |= (1<<ICES1);	//set rising edge trigger
 		ConversionState = STATE_FREE;
 	}
