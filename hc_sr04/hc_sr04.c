@@ -9,7 +9,7 @@
 
 #ifndef HARDWARE_TRIG
 #define SOFTWARE_TRIG
-#endif 
+#endif
 
 #define BAUD 250000		/* configure baud rate for UART */
 
@@ -30,12 +30,12 @@ void Trig(void);
 
 
 int main(void){
-	
-	Init();	
+
+	Init();
 	sei();	//enable interrupts
-	
+
 	while(1)
-	{	
+	{
 		if(FreshData == DATA_FRESH){	//send fresh (and correct) data only
 			ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
 				uart_puts(itoa(length/58,buffer,10));
@@ -44,7 +44,7 @@ int main(void){
 			uart_putc('\n');
 			FreshData=DATA_OLD;
 		}
-	}	
+	}
 }
 
 void Init(void){
@@ -52,17 +52,17 @@ void Init(void){
 	DDRB |= 1<<PB0;		//trigger out
 	TRIGGER_PIN_SET_LOW;
 	/* Timer0 configuration */
-	TCCR0 |= 1<<WGM01 | 1<<CS02 | 1<<CS00;	//CTC mode, prescaler=1024	
+	TCCR0 |= 1<<WGM01 | 1<<CS02 | 1<<CS00;	//CTC mode, prescaler=1024
 	TIMSK |= 1<<OCIE0;	//Output compare match interrupt enable
 	OCR0 = 249;	//(FCPU=16000000)/(prescaler=1024)/(OCR0+1=250)=62,5 ticks per second (every 16ms)
 	/* Timer1 configuration */
 	TCCR1B |= 1<<ICES1;	//set rising edge
 	TCCR1B |= 1<<CS11;	//prescaler=8
 	TIMSK |=  1<<TICIE1;	//Timer1 Capture Interrupt Enable
-	
+
 #ifdef HARDWARE_TRIG
 	TCCR1B |= 1<<WGM12;	//CTC mode
-	OCR1A =	19; //19+1 cycles=10us (1 tick=0,5us)	
+	OCR1A =	19; //19+1 cycles=10us (1 tick=0,5us)
 #endif
 	/* UART configuration */
 	uart_init((UART_BAUD_SELECT((BAUD),F_CPU)));
@@ -78,7 +78,7 @@ ISR(TIMER0_COMP_vect){	//62,5 times per second (every 16ms) ---> see Init() fucn
 		TRIGGER_PIN_SET_HIGH;
 		TCNT1 = 0; //reset Timer1
 		TIFR |= 1<<OCF1A;	//clear any previous interrupt flag
-		TIMSK |= 1<<OCIE1A;	//Output Compare A Match Interrupt Enable		
+		TIMSK |= 1<<OCIE1A;	//Output Compare A Match Interrupt Enable
 #endif
 
 #ifdef SOFTWARE_TRIG
@@ -89,7 +89,7 @@ ISR(TIMER0_COMP_vect){	//62,5 times per second (every 16ms) ---> see Init() fucn
 	} else if(cnt==4){	//after 4 ticks (64ms) still ConversionState=BUSY_STATE ---> it means timeout condition
 			cnt=0;
 			FreshData=DATA_BAD;
-		}	
+		}
 }
 
 ISR(TIMER1_CAPT_vect){	//interrupt frequency = 2MHZ (F_CPU=16MHZ / prescaler=8), 1 tick every 0,5us
@@ -101,10 +101,10 @@ ISR(TIMER1_CAPT_vect){	//interrupt frequency = 2MHZ (F_CPU=16MHZ / prescaler=8),
 	}else	//falling edge
 	{
 		if (FreshData != DATA_BAD){	//if timeout condition has not occurred
-			length = ICR1/2;	//length reading	(1 tick=0,5us -> 200=100us  therefore divided by 2)		
+			length = ICR1/2;	//length reading	(1 tick=0,5us -> 200=100us  therefore divided by 2)
 			FreshData = DATA_FRESH;	//set marker, reseted after sending data in main function
 		} else FreshData = DATA_OLD;	//next cycle will be handled correctly
-		
+
 		TCCR1B |= (1<<ICES1);	//set rising edge trigger
 		ConversionState = STATE_FREE;
 	}
@@ -115,7 +115,7 @@ ISR(TIMER1_CAPT_vect){	//interrupt frequency = 2MHZ (F_CPU=16MHZ / prescaler=8),
 ISR(TIMER1_COMPA_vect){ /* interrupt occurs after 10us */
 	TRIGGER_PIN_SET_LOW;		//end trigger signal
 	TIMSK &= ~(1<<OCIE1A);	//Output Compare A Match Interrupt Disable
-	TCCR1B &= ~(1<<WGM12);	//CTC mode disabled	
+	TCCR1B &= ~(1<<WGM12);	//CTC mode disabled
 }
 #endif /* HARDWARE_TRIG */
 
